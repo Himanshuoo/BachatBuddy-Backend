@@ -1,15 +1,27 @@
 package com.Mystartup.BacahatBuddy.Model;
-import jakarta.persistence.*;
 
+import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "order_items")
 public class OrderItem {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private Long productId;
+    private Integer quantity;
+    private BigDecimal price;
+
+    private String productName; // ✅ Added field
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+    // Getters & Setters
     public Long getId() {
         return id;
     }
@@ -50,11 +62,11 @@ public class OrderItem {
         this.order = order;
     }
 
-    private Long productId;
-    private Integer quantity;
-    private BigDecimal price;
+    public String getProductName() {
+        return productName; // ✅ Correct
+    }
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+    public void setProductName(String productName) {
+        this.productName = productName; // ✅ Correct
+    }
 }

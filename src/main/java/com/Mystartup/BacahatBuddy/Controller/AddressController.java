@@ -1,56 +1,56 @@
 package com.Mystartup.BacahatBuddy.Controller;
 
-import com.Mystartup.BacahatBuddy.Model.Address;
-import com.Mystartup.BacahatBuddy.Repository.AddressRepository;
-import com.Mystartup.BacahatBuddy.Repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.Mystartup.BacahatBuddy.DTO.AddressRequestDTO;
+import com.Mystartup.BacahatBuddy.DTO.AddressResponseDTO;
+import com.Mystartup.BacahatBuddy.Service.AddressService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/addresses")
-@CrossOrigin("*")
+@RequestMapping("/api")
+@CrossOrigin(
+        originPatterns = "*",
+        allowCredentials = "true"
+)
+
 public class AddressController {
 
-    @Autowired
-    private AddressRepository addressRepository;
+    private final AddressService addressService;
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @GetMapping("/user/{userId}")
-    public List<Address> getAddressesByUser(@PathVariable Long userId) {
-        return addressRepository.findAll().stream()
-                .filter(a -> a.getUser().getId().equals(userId))
-                .toList();
+    public AddressController(AddressService addressService) {
+        this.addressService = addressService;
     }
 
-    @PostMapping("/user/{userId}")
-    public Address addAddress(@PathVariable Long userId, @RequestBody Address address) {
-        userRepository.findById(userId).ifPresent(address::setUser);
-        return addressRepository.save(address);
+    // GET /api/users/{userId}/addresses
+    @GetMapping("/users/{userId}/addresses")
+    public ResponseEntity<List<AddressResponseDTO>> getAddressesByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(addressService.getAddressesByUser(userId));
     }
 
-    @PutMapping("/{id}")
-    public Address updateAddress(@PathVariable Long id, @RequestBody Address address) {
-        Address existing = addressRepository.findById(id).orElse(null);
-        if (existing != null) {
-            existing.setName(address.getName());
-            existing.setPhone(address.getPhone());
-            existing.setLine1(address.getLine1());
-            existing.setLine2(address.getLine2());
-            existing.setCity(address.getCity());
-            existing.setState(address.getState());
-            existing.setPincode(address.getPincode());
-            existing.setIsDefault(address.getIsDefault());
-            return addressRepository.save(existing);
-        }
-        return null;
+    // POST /api/users/{userId}/addresses
+    @PostMapping("/users/{userId}/addresses")
+    public ResponseEntity<AddressResponseDTO> addAddress(@PathVariable Long userId,
+                                                         @Valid @RequestBody AddressRequestDTO dto) {
+        AddressResponseDTO created = addressService.addAddress(userId, dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteAddress(@PathVariable Long id) {
-        addressRepository.deleteById(id);
+    // PUT /api/addresses/{id}
+    @PutMapping("/addresses/{id}")
+    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable Long id,
+                                                            @Valid @RequestBody AddressRequestDTO dto) {
+        AddressResponseDTO updated = addressService.updateAddress(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    // DELETE /api/addresses/{id}
+    @DeleteMapping("/addresses/{id}")
+    public ResponseEntity<Void> deleteAddress(@PathVariable Long id) {
+        addressService.deleteAddress(id);
+        return ResponseEntity.noContent().build();
     }
 }

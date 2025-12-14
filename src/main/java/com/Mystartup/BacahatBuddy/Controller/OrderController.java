@@ -1,55 +1,52 @@
 package com.Mystartup.BacahatBuddy.Controller;
 
-import com.Mystartup.BacahatBuddy.Model.Order;
-import com.Mystartup.BacahatBuddy.Repository.OrderRepository;
-import com.Mystartup.BacahatBuddy.Repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.Mystartup.BacahatBuddy.DTO.OrderRequestDTO;
+import com.Mystartup.BacahatBuddy.DTO.OrderResponseDTO;
+import com.Mystartup.BacahatBuddy.Service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/orders")
-@CrossOrigin("*")
+@CrossOrigin(
+        originPatterns = "*",
+        allowCredentials = "true"
+)
+
 public class OrderController {
 
-    @Autowired
-    private OrderRepository orderRepository;
+    private final OrderService orderService;
 
-    @Autowired
-    private UserRepository userRepository;
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     @GetMapping
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public List<OrderResponseDTO> getAllOrders() {
+        return orderService.getAllOrders();
     }
 
     @GetMapping("/user/{userId}")
-    public List<Order> getOrdersByUser(@PathVariable Long userId) {
-        return orderRepository.findAll().stream()
-                .filter(o -> o.getUser().getId().equals(userId))
-                .toList();
+    public List<OrderResponseDTO> getOrdersByUser(@PathVariable Long userId) {
+        return orderService.getOrdersByUser(userId);
     }
 
     @PostMapping("/user/{userId}")
-    public Order createOrder(@PathVariable Long userId, @RequestBody Order order) {
-        userRepository.findById(userId).ifPresent(order::setUser);
-        return orderRepository.save(order);
+    public OrderResponseDTO createOrder(@PathVariable Long userId,
+                                        @Valid @RequestBody OrderRequestDTO dto) {
+        return orderService.createOrder(userId, dto);
     }
 
     @PutMapping("/{id}")
-    public Order updateOrder(@PathVariable Long id, @RequestBody Order order) {
-        Order existing = orderRepository.findById(id).orElse(null);
-        if (existing != null) {
-            existing.setStatus(order.getStatus());
-            existing.setTotalAmount(order.getTotalAmount());
-            return orderRepository.save(existing);
-        }
-        return null;
+    public OrderResponseDTO updateOrder(@PathVariable Long id,
+                                        @Valid @RequestBody OrderRequestDTO dto) {
+        return orderService.updateOrder(id, dto);
     }
 
     @DeleteMapping("/{id}")
     public void deleteOrder(@PathVariable Long id) {
-        orderRepository.deleteById(id);
+        orderService.deleteOrder(id);
     }
 }
