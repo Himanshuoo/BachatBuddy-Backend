@@ -29,12 +29,10 @@ public class User {
     private String nationality;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore   // ✅ Prevent infinite recursion
+    @JsonIgnore
     private List<Address> addresses = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonIgnore   // ✅ Prevent infinite recursion
+    @JsonIgnore
     private List<Order> orders = new ArrayList<>();
-
-    // getters & setters...
 }

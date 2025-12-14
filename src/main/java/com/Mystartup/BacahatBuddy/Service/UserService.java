@@ -7,10 +7,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
-    @Autowired
+
     private final UserRepository repo;
 
     @Autowired
@@ -28,12 +29,11 @@ public class UserService {
         return repo.findById(id).orElse(null);
     }
 
-    public User getUserByUsername(String username) {
+    public Optional<User> getUserByUsername(String username) {
         return repo.findByUsername(username);
     }
 
     public User createUser(User user) {
-        // Encode password before saving
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return repo.save(user);
     }

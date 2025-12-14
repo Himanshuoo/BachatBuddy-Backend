@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -54,17 +55,18 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
+
         if (user.getUsername() == null || user.getPassword() == null) {
             return ResponseEntity.badRequest().body("Username and password are required");
         }
 
-        // Check if user already exists
-        if (service.getUserByUsername(user.getUsername()) != null) {
+        Optional<User> existing = service.getUserByUsername(user.getUsername());
+        if (existing.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
         }
 
-        User saved = service.createUser(user);
-        return ResponseEntity.ok().body("User registered successfully");
+        service.createUser(user);
+        return ResponseEntity.ok("User registered successfully");
     }
 
     @DeleteMapping("/{id}")
@@ -82,24 +84,26 @@ public class UserController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Username and password are required");
             }
 
-            // Authenticate user
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(username, password));
 
-            // Generate JWT token
             String token = jwtUtil.generateToken(username);
 
-            // Get user details
-            User user = service.getUserByUsername(username);
+            Optional<User> userOpt = service.getUserByUsername(username);
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
+            }
 
-            // Return token and user info
+            User user = userOpt.get();
+
             AuthResponse response = new AuthResponse(token, username, "Login successful", user.getId());
             return ResponseEntity.ok(response);
 
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("An error occurred: " + e.getMessage());
         }
     }
 }
